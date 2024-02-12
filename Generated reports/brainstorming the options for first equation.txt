@@ -1,0 +1,20 @@
+Overall notes:
+HOW DO I DO A LAPLACE TRANSFORM OF f(t).... I can figure that out, atleast
+laplace U(t-tau) needs to be done as well
+
+What needs to be done:
+Remake the matlab code so it just runs the SFR model with 1 value. Im not looking to do many values for that.
+Figure out how to either do it with data, or do it ENTIRELY from equations first, then modelling them. I think maybe running a master matlab script, which runs individual simulations, which run matlab scripts for the laplace stuff.
+that way its still a matlab script, but I dont need to manipulate data, and can manipulate a simulation instead.... idk
+
+
+
+Solutions?:
+
+1: run SFR and then use each data point, somehow, in a symbolic function?
+
+2: make a simulink model which runs the SFR, then runs it through a matlab script which has a symbolic function. takes every data point, and uses it in the inverse laplace.
+model f(t), find the df(t) using unit func U(t-tau), which might need to be called in a master matlab file to change tau, could possibly do both in simulink.
+then go to another matlab func to laplace transform, returning just the value of delta p.
+
+3: make each func symbolically, dont even think of running a simulink, and then manually simulate it with plot call, with an abritrary amount of t. <---------------------------
