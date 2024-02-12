@@ -9,10 +9,9 @@ SigIn = Injection_File.SigIn;
 
 out = sim(model1);
 
-time = out.tout;
-data = out.simout;
 
-plot(time,data);
+
+plot(out.simout);
 
 
 %Part 2: defining f(t) and F(s)
