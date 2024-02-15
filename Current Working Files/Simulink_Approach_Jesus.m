@@ -1,6 +1,6 @@
 %Initialization of the experiment
 %Correction Factor Value:
-B = 0.5;
+B = 0.9;
 %Pd or P step loss in the case of an LoG event
 Pd = -0.3;
 
@@ -45,17 +45,21 @@ for i = 1 : length(dft.Data)
         dft.Data(i) = 0;
     end
 end
-% plot(dft); %Just proving it works and looks right
-% xlim([0 20])
-% ylim([-0.01 0.03])
 
 
 %Part 3: running this through a Simulink Model which does the Laplace
 %transform and Inversve Laplace transform using time series dft and GSFR
-model2 = "dft_through_inverse_GSFR";
+model2 = "inverse_GSFR";
 open_system(model2);
 pt_output = sim(model2);
+
+
+hold on
+plot(dft) %Just proving it works and looks right
+xlim([0 20]);
+ylim([0 0.2]);
 plot(pt_output.simout);
+hold off
 
 
 % Injection_File = load("Correction_half");

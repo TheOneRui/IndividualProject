@@ -1,31 +1,18 @@
 %Part 1: calculate GSFR(s)
-model1 = "function1";
+model1 = "GSFR_with_P_sigIn";
 open_system(model1);
 
-%assign the block (blk) to the one changing
-blk1 = model1 + "/Pd";
 %create initial Pd
 Pd = -0.3;
-%sets the value of constant block to the parameter Pd
-set_param(blk1,"Value","Pd");
+Injection_File = load("Correction_half");
+SigIn = Injection_File.SigIn;
 
 out = sim(model1);
 
 time = out.tout;
 data = out.simout;
 
-hold on
-for k = 0 : 1 : 6
-    for j = length(time):-1:1
-        if(time(j) <= k)
-            data(j) = 0;
-        end
-    end
-    plot(time,data);
-end
-
-hold off
-
+plot(time,data);
 
 
 %Part 2: defining f(t) and F(s)
