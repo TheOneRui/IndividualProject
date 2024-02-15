@@ -54,7 +54,8 @@ end
 %transform and Inversve Laplace transform using time series dft and GSFR
 model2 = "dft_through_inverse_GSFR";
 open_system(model2);
-
+pt_output = sim(model2);
+plot(pt_output.simout);
 
 
 % Injection_File = load("Correction_half");
