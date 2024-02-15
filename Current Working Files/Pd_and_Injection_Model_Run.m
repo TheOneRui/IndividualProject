@@ -4,8 +4,8 @@ open_system(model1);
 
 %create initial Pd
 Pd = -0.3;
-Injection_File = load("Correction_half");
-SigIn = Injection_File.SigIn;
+Injection_File = load("correction_point_8");
+SigIn = Injection_File.y11;
 
 out = sim(model1);
 
