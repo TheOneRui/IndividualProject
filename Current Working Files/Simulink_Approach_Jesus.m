@@ -11,7 +11,8 @@ open_system(model1);
 SigIn = [0 0];
 
 %run the Simulink Model for GSFR, store output
-GSFR_output = sim(model1).simout;
+output = sim(model1);
+GSFR_output = output.simout;
 %the Data is hidden in GSFR_output's sub section of "simout" (Plotted for
 %ease of visibility)
 %plot(GSFR_output);
@@ -44,15 +45,15 @@ for i = 1 : length(dft.Data)
         dft.Data(i) = 0;
     end
 end
-% plot(dft); Just proving it works and looks right
+% plot(dft); %Just proving it works and looks right
 % xlim([0 20])
 % ylim([-0.01 0.03])
 
 
 %Part 3: running this through a Simulink Model which does the Laplace
 %transform and Inversve Laplace transform using time series dft and GSFR
-model2 = "GSFR_with_P_sigIn";
-open_system(model1);
+model2 = "dft_laplace_and_divided_by_GSFR";
+open_system(model2);
 
 
 
