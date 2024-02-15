@@ -52,7 +52,7 @@ end
 
 %Part 3: running this through a Simulink Model which does the Laplace
 %transform and Inversve Laplace transform using time series dft and GSFR
-model2 = "dft_laplace_and_divided_by_GSFR";
+model2 = "dft_through_inverse_GSFR";
 open_system(model2);
 
 
