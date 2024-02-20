@@ -1,11 +1,25 @@
 %Initialization of the experiment
-%Correction Factor Value:
-B = 0.9;
-%Pd or P step loss in the case of an LoG event
-Pd = -0.3;
+%Initialize Global Variables
+resolution = 3;
+B = 0.9; %Correction Factor Value:
+Pd = -0.3; %the LoG event
+
+%Initialize variables of the SFR model (network values)
+%can be modified in the future to run from input files
+R = 0.05;
+H = 4.0;
+K = 0.95;
+Fh = 0.3;
+Tr = 8.0;
+D = 1.0;
+%calculate the extra variables
+wn = sqrt((D*R+K)/(2*H*R*Tr));
+c = (((2*H*R)+(((D*R)+(K*Fh))*Tr))/(2*(D*R+K)))*wn;
+
+
 
 %Part 1: calculate GSFR(s) and the BASE CASE
-model1 = "GSFR_with_P_sigIn";
+model1 = "GSFR_Individual_Vars";
 open_system(model1);
 %load an empty signal for Power injection (SigIn)
 SigIn = [0 0];
@@ -49,18 +63,8 @@ end
 
 %Part 3: running this through a Simulink Model which does the Laplace
 %transform and Inversve Laplace transform using time series dft and GSFR
-model2 = "inverse_GSFR";
+model2 = "inverse_GSFR_Individual_Vars";
 open_system(model2);
 pt_output = sim(model2);
 
-
-hold on
-plot(dft) %Just proving it works and looks right
-xlim([0 20]);
-ylim([0 0.2]);
 plot(pt_output.simout);
-hold off
-
-
-% Injection_File = load("Correction_half");
-% SigIn = Injection_File.SigIn;
