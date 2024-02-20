@@ -1,12 +1,12 @@
-%Initialization of the experiment
+%Part 0: Initialization of the experiment
 %Initialize Global Variables
-Percent_Correction = 75;
+Percent_Correction = 40;
 Pd = -0.3; %the LoG event
 SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
 
 %Initialize Monte Carlo Conditions
 resolution = 3;
-mew = 4;
+mean = 4;
 stand_dev = 0.5;
 
 %Initialize Storage Variables:
@@ -23,8 +23,18 @@ Tr = 8.0;
 D = 1.0;
 B = Percent_Correction/100; %Correction Factor Value:
 
+%Initialize Simulink Models
+GSFR_model = "GSFR_Individual_Vars";
+load_system(GSFR_model); %load the GSFR Model with Workspace Variables
 
-for j = mew - 3*stand_dev : stand_dev/resolution : mew + 3*stand_dev
+inverse_GSFR_model = "inverse_GSFR_Individual_Vars";
+load_system(inverse_GSFR_model); %load the inverse GSFR Model
+
+
+%Run the Actual Monte Carlo Simulation
+%Uses a for loop determined by the global variables
+%mean, standard deviation, and resolution, for Inertia (H)
+for j = mean - 3*stand_dev : stand_dev/resolution : mean + 3*stand_dev
     %set the changing variable to J
     H = j;
     
@@ -40,9 +50,6 @@ for j = mew - 3*stand_dev : stand_dev/resolution : mew + 3*stand_dev
 
 
     %Part 1: calculate GSFR(s) and the BASE CASE
-    GSFR_model = "GSFR_Individual_Vars";
-    load_system(GSFR_model);
-
     %run the Simulink Model for GSFR, store output
     output = sim(GSFR_model);
     GSFR_output = output.simout;
@@ -82,29 +89,31 @@ for j = mew - 3*stand_dev : stand_dev/resolution : mew + 3*stand_dev
 
     %Part 3: running this through a Simulink Model which does the Laplace
     %transform and Inversve Laplace transform using time series dft and GSFR
-    inverse_GSFR_model = "inverse_GSFR_Individual_Vars";
-    load_system(inverse_GSFR_model);
     inverse_output = sim(inverse_GSFR_model);
 
+    %Increment run number and add to the Results storage Cell Array
     run_num = run_num+1;
     results{1,run_num} = inverse_output.simout; %store the results for Plotting
 end
 
 
 %Plot Results for Saving
-clf;
+clf; %Clear Plot
 hold on
-for i = 1 : length(results)
+for i = 1 : length(results) %Plot all the results in one Figure
     plot(results{1,i},':');
 end
-plot(results{1,round(length(results)/2)},'k');
-plot_title = sprintf('Envelope P(t) for B = %f, H = %d with standard deviation %d',B,mew,stand_dev);
+%Plot the Mean result last so it sits on top and is most obvious
+plot(results{1,round(length(results)/2)},'k'); 
+%Add appropriate title and axis labels
+plot_title = sprintf('Envelope P(t) for B = %f, H = %d with standard deviation %d',B,mean,stand_dev);
 title(plot_title);
 xlabel('Time (s) since LoG Event')
 ylabel('Active Power (pu)')
 hold off
 
-file_title = sprintf('B_%d_H_%d.png',Percent_Correction,mew);
+%Save results to figure file and PNG
+file_title = sprintf('B_%d_H_%d.png',Percent_Correction,mean);
 saveas(gcf,file_title);
-file_title = sprintf('B_%d_H_%d',Percent_Correction,mew);
+file_title = sprintf('B_%d_H_%d',Percent_Correction,mean);
 saveas(gcf,file_title);
