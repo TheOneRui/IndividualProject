@@ -3,7 +3,6 @@
 resolution = 3;
 B = 0.9; %Correction Factor Value:
 Pd = -0.3; %the LoG event
-SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
 
 %Initialize variables of the SFR model (network values)
 %can be modified in the future to run from input files
@@ -26,10 +25,12 @@ x1 = D*R+K;
 
 %Part 1: calculate GSFR(s) and the BASE CASE
 GSFR_model = "GSFR_Individual_Vars";
-open_system(GSFR_model);
+open_system(model1);
+%load an empty signal for Power injection (SigIn)
+SigIn = [0 0];
 
 %run the Simulink Model for GSFR, store output
-output = sim(GSFR_model);
+output = sim(model1);
 GSFR_output = output.simout;
 %the Data is hidden in GSFR_output's sub section of "simout" (Plotted for
 %ease of visibility)
@@ -67,8 +68,8 @@ end
 
 %Part 3: running this through a Simulink Model which does the Laplace
 %transform and Inversve Laplace transform using time series dft and GSFR
-inverse_GSFR_model = "inverse_GSFR_Individual_Vars";
-open_system(inverse_GSFR_model);
-inverse_output = sim(inverse_GSFR_model);
+model2 = "inverse_GSFR_Individual_Vars";
+open_system(model2);
+pt_output = sim(model2);
 
-plot(inverse_output.simout);
+plot(pt_output.simout);
