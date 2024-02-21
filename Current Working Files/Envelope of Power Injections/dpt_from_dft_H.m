@@ -6,6 +6,8 @@ SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
 
 %Initialize Monte Carlo Conditions
 resolution = 3;
+mean = 4;
+stand_dev = 0.5;
 
 %Initialize Storage Variables:
 results = cell(1,6*resolution);
@@ -14,7 +16,7 @@ run_num = 0;
 %Initialize variables of the SFR model (network values)
 %can be modified in the future to run from input files
 R = 0.05;
-H = 4.0; %mean of 5.5 with dev 1.17
+H = 4.0;
 K = 0.95;
 Fh = 0.3;
 Tr = 8.0;
