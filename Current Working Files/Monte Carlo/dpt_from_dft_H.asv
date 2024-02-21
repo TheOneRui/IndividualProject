@@ -3,7 +3,7 @@
 Percent_Correction = 100;
 Pd = -0.3; %the LoG event
 SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
-Total_Num_Runs = 10000;
+Total_Num_Runs = 20;
 %Initialize Storage Variables:
 results = cell(1,Total_Num_Runs+2);
 run_num = 2;
@@ -116,12 +116,15 @@ end
 
 
 
-%Update progress ba
+%Update progress bar
+waitbar(0.5,progress,'Simulations Complete -> Plotting results');
 %Plot Results for Saving
 hold on
 for i = 3 : length(results) %Plot all the results in one Figure
     plot(results{1,i},':');
+    waitbar(0.5+(1/Total_Num_Runs)*((i-2)/2),progress);
 end
+close(progress);
 %Plot the Mean result last so it sits on top and is most obvious
 plot(results{1,1},'k--'); 
 plot(results{1,2},'k'); 

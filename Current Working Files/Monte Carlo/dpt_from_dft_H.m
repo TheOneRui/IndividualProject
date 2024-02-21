@@ -3,7 +3,7 @@
 Percent_Correction = 100;
 Pd = -0.3; %the LoG event
 SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
-Total_Num_Runs = 250;
+Total_Num_Runs = 20;
 %Initialize Storage Variables:
 results = cell(1,Total_Num_Runs+2);
 run_num = 2;
