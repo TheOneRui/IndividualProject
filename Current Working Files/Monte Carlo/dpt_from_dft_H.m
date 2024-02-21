@@ -1,117 +1,154 @@
 %Part 0: Initialization of the experiment
 %Initialize Global Variables
-Percent_Correction = 40;
+Percent_Correction = 100;
 Pd = -0.3; %the LoG event
 SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
-
-%Initialize Monte Carlo Conditions
-resolution = 3;
-
+Total_Num_Runs = 250;
 %Initialize Storage Variables:
-results = cell(1,6*resolution);
-run_num = 0;
-
-%Initialize variables of the SFR model (network values)
-%can be modified in the future to run from input files
-R = 0.05;
-H = 4.0; %mean of 5.5 with dev 1.17
-K = 0.95;
-Fh = 0.3;
-Tr = 8.0;
-D = 1.0;
-B = Percent_Correction/100; %Correction Factor Value:
+results = cell(1,Total_Num_Runs+2);
+run_num = 2;
 
 %Initialize Simulink Models
 GSFR_model = "GSFR_Individual_Vars";
 load_system(GSFR_model); %load the GSFR Model with Workspace Variables
-
 inverse_GSFR_model = "inverse_GSFR_Individual_Vars";
 load_system(inverse_GSFR_model); %load the inverse GSFR Model
 
+%Progress Bar for the Longer Monte Carlo Sims
+clf; %Clear Plot
+progress = waitbar(0,'running simulation');
 
-%Run the Actual Monte Carlo Simulation
-%Uses a for loop determined by the global variables
-%mean, standard deviation, and resolution, for Inertia (H)
-for j = mean - 3*stand_dev : stand_dev/resolution : mean + 3*stand_dev
-    %set the changing variable to J
-    H = j;
-    
-    %calculate the extra variables
+
+%Part 1: Running The Assumed Values GSFR model
+%Initialize variables of the ORIGINAL SFR model (assumed network values)
+R = 0.075;
+H = 5.5;
+K = 0.95;
+Fh = 0.25;
+Tr = 9.0;
+D = 1.0;
+B = Percent_Correction/100; %Correction Factor Value:
+
+
+%Part 1.1: calculate GSFR(s) and the BASE CASE
+%calculate the extra variables
+wn = sqrt((D*R+K)/(2*H*R*Tr));
+c = (((2*H*R)+(((D*R)+(K*Fh))*Tr))/(2*(D*R+K)))*wn;
+%polynomial variables
+a1 = (D*R+K)*2*c*wn;
+b1 = wn^2;
+c1 = (wn^2)*R*Tr;
+d1 = (wn^2)*R;
+x1 = D*R+K;
+
+%run the Simulink Model for GSFR, store output
+output = sim(GSFR_model);
+GSFR_output = output.simout;
+results{1,1} = GSFR_output; %store the results for Plotting Later
+
+
+%Part 2: establishing the signals needed
+%Need to establish Tau and Tau2, using the value of B (correction factor) 
+%and the Dtr, Settling frequency, and frequency nadir.
+%can then manually do the unit step function work with a for loop
+Nadir = min(GSFR_output);
+settling_Frequency = 1 + ((R*Pd)/(D*R+K));
+Dtr = settling_Frequency - Nadir;
+New_Nadir = B*Dtr + Nadir;
+
+%Finding tau
+tau = GSFR_output.Time(find(GSFR_output.Data < Dtr*B+Nadir,1,'first'));
+tau_Index = find(GSFR_output.Data < Dtr*B+Nadir,1,'first');
+%Finding tau2
+tau2 = GSFR_output.Time(find(GSFR_output.Data < Dtr*B+Nadir,1,'last'));
+tau2_Index = find(GSFR_output.Data < Dtr*B+Nadir,1,'last');
+
+%creating the compensating injection frequency
+dft = GSFR_output;
+for i = 1 : length(dft.Data)
+    if(i >= tau_Index && i <= tau2_Index)
+        dft.Data(i) = New_Nadir - GSFR_output.Data(i);
+    else
+        dft.Data(i) = 0;
+    end
+end
+
+
+%Part 2: running Delta f(t) through Inverse GSFR for injection p(t)
+inverse_output = sim(inverse_GSFR_model);
+SigIn = inverse_output.simout; %store the results for Monte Carlo
+
+output = sim(GSFR_model);
+GSFR_output = output.simout;
+results{1,2} = GSFR_output; %store the results for Plotting later
+
+
+
+
+
+
+
+%Part 3: Monte Carlo Runs
+%Insert the Power Injection from Part 2 into a GSFR with Random Values
+%Determined by a Normal Distribution for each Variable or System condition
+for i = 1 : Total_Num_Runs
+    %Increment Run Number
+    run_num = run_num + 1;
+    %Randomize the Variables by Normal Distribution
+    R = (0.05/3)*randn()+0.075;
+    H = 1.17*randn()+5.5; %mean of 5.5 with dev 1.17
+    K = 0.95;
+    Fh = 0.034*randn()+0.25;
+    Tr = 0.67*randn()+9;
+    D = 1.0; 
     wn = sqrt((D*R+K)/(2*H*R*Tr));
     c = (((2*H*R)+(((D*R)+(K*Fh))*Tr))/(2*(D*R+K)))*wn;
-    %polynomial variables
-    a1 = (D*R+K)*2*c*wn;
-    b1 = wn^2;
-    c1 = (wn^2)*R*Tr;
-    d1 = (wn^2)*R;
-    x1 = D*R+K;
-
-
-    %Part 1: calculate GSFR(s) and the BASE CASE
-    %run the Simulink Model for GSFR, store output
+    
+    %Run the GSFR model with new Variable values
     output = sim(GSFR_model);
     GSFR_output = output.simout;
-    %the Data is hidden in GSFR_output's sub section of "simout" (Plotted for
-    %ease of visibility)
-    %plot(GSFR_output);
-
-
-
-    %Part 2: establishing the signals needed
-    %Need to establish Tau and Tau2, using the value of B (correction factor) 
-    %and the Dtr, Settling frequency, and frequency nadir.
-    %can then manually do the unit step function work with a for loop
-    Nadir = min(GSFR_output);
-    settling_Frequency = GSFR_output.Data(end, :);
-    Dtr = settling_Frequency - Nadir;
-    New_Nadir = B*Dtr + Nadir;
-
-    %Finding tau
-    tau = GSFR_output.Time(find(GSFR_output.Data < Dtr*B+Nadir,1,'first'));
-    tau_Index = find(GSFR_output.Data < Dtr*B+Nadir,1,'first');
-    %Finding tau2
-    tau2 = GSFR_output.Time(find(GSFR_output.Data < Dtr*B+Nadir,1,'last'));
-    tau2_Index = find(GSFR_output.Data < Dtr*B+Nadir,1,'last');
-
-
-    %creating the compensating injection frequency
-    dft = GSFR_output;
-    for i = 1 : length(dft.Data)
-        if(i >= tau_Index && i <= tau2_Index)
-            dft.Data(i) = New_Nadir - GSFR_output.Data(i);
-        else
-            dft.Data(i) = 0;
-        end
-    end
-
-
-    %Part 3: running this through a Simulink Model which does the Laplace
-    %transform and Inversve Laplace transform using time series dft and GSFR
-    inverse_output = sim(inverse_GSFR_model);
-
-    %Increment run number and add to the Results storage Cell Array
-    run_num = run_num+1;
-    results{1,run_num} = inverse_output.simout; %store the results for Plotting
+    results{1,run_num} = GSFR_output; %store the results for Plotting later
+    
+    
+    %display progress
+    waitbar((1/Total_Num_Runs)*(run_num/2),progress);
 end
 
 
+
+%Update progress bar
+waitbar(0.5,progress,'Simulations Complete -> Plotting results');
 %Plot Results for Saving
-clf; %Clear Plot
 hold on
-for i = 1 : length(results) %Plot all the results in one Figure
+for i = 3 : length(results) %Plot all the results in one Figure
     plot(results{1,i},':');
+    waitbar(0.5+(1/Total_Num_Runs)*((i-2)/2),progress);
 end
+close(progress);
 %Plot the Mean result last so it sits on top and is most obvious
-plot(results{1,round(length(results)/2)},'k'); 
+plot(results{1,1},'k--'); 
+plot(results{1,2},'k'); 
 %Add appropriate title and axis labels
-plot_title = sprintf('Envelope P(t) for B = %f, H = %d with standard deviation %d',B,mean,stand_dev);
+plot_title = sprintf('Envelope f(t) for B = %f with %d runs',B,Total_Num_Runs);
 title(plot_title);
 xlabel('Time (s) since LoG Event')
-ylabel('Active Power (pu)')
+ylabel('Frequency (pu)')
 hold off
 
-%Save results to figure file and PNG
-file_title = sprintf('B_%d_H_%d.png',Percent_Correction,mean);
+
+%make folder to save output files to
+folder_title = sprintf('results_B_%d_Runs_%d',Percent_Correction,Total_Num_Runs);
+mkdir (folder_title);
+%Save results to figure file, PNG, and raw Cell Array
+file_title = sprintf('B_%d_Runs_%d',Percent_Correction,Total_Num_Runs);
 saveas(gcf,file_title);
-file_title = sprintf('B_%d_H_%d',Percent_Correction,mean);
-saveas(gcf,file_title);
+movefile([file_title '.fig'], folder_title);
+
+file_title1 = sprintf('B_%d_Runs_%d.png',Percent_Correction,Total_Num_Runs);
+saveas(gcf,file_title1);
+movefile(file_title1, folder_title);
+
+file_title2 = sprintf('B_%d_Runs_%d.mat',Percent_Correction,Total_Num_Runs);
+save(file_title2, "results");
+movefile(file_title2, folder_title);
+
