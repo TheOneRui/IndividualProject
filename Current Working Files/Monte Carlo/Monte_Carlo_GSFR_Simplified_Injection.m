@@ -1,12 +1,15 @@
 %Part 0: Initialization of the experiment
 %Initialize Global Variables
-Percent_Correction = 100;
+Percent_Correction = 20;
 Pd = -0.3; %the LoG event
 SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
-Total_Num_Runs = 20;
+Total_Num_Runs = 5;
 %Initialize Storage Variables:
-results = cell(1,Total_Num_Runs+2);
+results = cell(2,Total_Num_Runs+2);
 run_num = 2;
+%make folder to save output files to
+folder_title = sprintf('results_Simplified_B_%d_Runs_%d',Percent_Correction,Total_Num_Runs);
+mkdir (folder_title);
 
 %Initialize Simulink Models
 GSFR_model = "GSFR_Individual_Vars";
@@ -45,6 +48,7 @@ x1 = D*R+K;
 output = sim(GSFR_model);
 GSFR_output = output.simout;
 results{1,1} = GSFR_output; %store the results for Plotting Later
+results{2,1} = [R H K Fh Tr D];
 
 
 %Part 2: establishing the signals needed
@@ -57,10 +61,8 @@ Dtr = settling_Frequency - Nadir;
 New_Nadir = B*Dtr + Nadir;
 
 %Finding tau
-tau = GSFR_output.Time(find(GSFR_output.Data < Dtr*B+Nadir,1,'first'));
 tau_Index = find(GSFR_output.Data < Dtr*B+Nadir,1,'first');
 %Finding tau2
-tau2 = GSFR_output.Time(find(GSFR_output.Data < Dtr*B+Nadir,1,'last'));
 tau2_Index = find(GSFR_output.Data < Dtr*B+Nadir,1,'last');
 
 %creating the compensating injection frequency
@@ -78,10 +80,46 @@ end
 inverse_output = sim(inverse_GSFR_model);
 SigIn = inverse_output.simout; %store the results for Monte Carlo
 
+%Plot and Save Ideal Injection for comparison
+plot(SigIn);
+plot_title = sprintf('Power Injection for B = %f',B);
+title(plot_title);
+xlabel('Time (s) since LoG Event')
+ylabel('Active Power (pu)')
+file_title1 = sprintf('Power_Injection_B_%d.png',Percent_Correction);
+saveas(gcf,file_title1);
+movefile(file_title1, folder_title);
+clf;
+
+
+
+%Manipulate SigIn to use a "Simplified" Triangular Injection
+injection_Max = max(SigIn);
+injection_Index = find(SigIn.Data >= injection_Max,1,'first');
+injection_Final = SigIn.Data(length(SigIn.Data));
+injection_Steps = (injection_Max - injection_Final) /(length(SigIn.Data) - injection_Index);
+
+for i = injection_Index : length(SigIn.Data)
+    SigIn.Data(i) = injection_Max - ((i-injection_Index)*injection_Steps);
+end
+
+%Plot and Save Injection for Postarity
+plot(SigIn);
+plot_title = sprintf('Power Injection for B = %f',B);
+title(plot_title);
+xlabel('Time (s) since LoG Event')
+ylabel('Active Power (pu)')
+file_title1 = sprintf('Simplifed_Power_Injection_B_%d.png',Percent_Correction);
+saveas(gcf,file_title1);
+movefile(file_title1, folder_title);
+clf;
+
+
+%Run Injection through GSFR to get the Base Case response with Injection
 output = sim(GSFR_model);
 GSFR_output = output.simout;
 results{1,2} = GSFR_output; %store the results for Plotting later
-
+results{2,2} = [R H K Fh Tr D];
 
 
 
@@ -108,6 +146,7 @@ for i = 1 : Total_Num_Runs
     output = sim(GSFR_model);
     GSFR_output = output.simout;
     results{1,run_num} = GSFR_output; %store the results for Plotting later
+    results{2,run_num} = [R H K Fh Tr D];
     
     
     %display progress
@@ -136,9 +175,7 @@ ylabel('Frequency (pu)')
 hold off
 
 
-%make folder to save output files to
-folder_title = sprintf('results_B_%d_Runs_%d',Percent_Correction,Total_Num_Runs);
-mkdir (folder_title);
+
 %Save results to figure file, PNG, and raw Cell Array
 file_title = sprintf('B_%d_Runs_%d',Percent_Correction,Total_Num_Runs);
 saveas(gcf,file_title);

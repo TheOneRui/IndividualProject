@@ -3,10 +3,13 @@
 Percent_Correction = 100;
 Pd = -0.3; %the LoG event
 SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
-Total_Num_Runs = 20;
+Total_Num_Runs = 10;
 %Initialize Storage Variables:
-results = cell(1,Total_Num_Runs+2);
+results = cell(2,Total_Num_Runs+2);
 run_num = 2;
+%make folder to save output files to
+folder_title = sprintf('results_B_%d_Runs_%d',Percent_Correction,Total_Num_Runs);
+mkdir (folder_title);
 
 %Initialize Simulink Models
 GSFR_model = "GSFR_Individual_Vars";
@@ -45,6 +48,7 @@ x1 = D*R+K;
 output = sim(GSFR_model);
 GSFR_output = output.simout;
 results{1,1} = GSFR_output; %store the results for Plotting Later
+results{2,1} = [R H K Fh Tr D];
 
 
 %Part 2: establishing the signals needed
@@ -78,10 +82,22 @@ end
 inverse_output = sim(inverse_GSFR_model);
 SigIn = inverse_output.simout; %store the results for Monte Carlo
 
+%Plot and Save Injection for Postarity
+plot(SigIn);
+plot_title = sprintf('Power Injection for B = %f',B);
+title(plot_title);
+xlabel('Time (s) since LoG Event')
+ylabel('Active Power (pu)')
+file_title1 = sprintf('Corrective_Power_Injection_for_B_%d.png',Percent_Correction,Total_Num_Runs);
+saveas(gcf,file_title1);
+movefile(file_title1, folder_title);
+clf;
+
+%Run Injection through GSFR to get the Base Case response with Injection
 output = sim(GSFR_model);
 GSFR_output = output.simout;
 results{1,2} = GSFR_output; %store the results for Plotting later
-
+results{2,2} = [R H K Fh Tr D];
 
 
 
@@ -108,6 +124,7 @@ for i = 1 : Total_Num_Runs
     output = sim(GSFR_model);
     GSFR_output = output.simout;
     results{1,run_num} = GSFR_output; %store the results for Plotting later
+    results{2,run_num} = [R H K Fh Tr D];
     
     
     %display progress
@@ -136,9 +153,7 @@ ylabel('Frequency (pu)')
 hold off
 
 
-%make folder to save output files to
-folder_title = sprintf('results_B_%d_Runs_%d',Percent_Correction,Total_Num_Runs);
-mkdir (folder_title);
+
 %Save results to figure file, PNG, and raw Cell Array
 file_title = sprintf('B_%d_Runs_%d',Percent_Correction,Total_Num_Runs);
 saveas(gcf,file_title);
