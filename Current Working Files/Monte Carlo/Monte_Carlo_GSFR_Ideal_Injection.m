@@ -1,6 +1,6 @@
 %Part 0: Initialization of the experiment
 %Initialize Global Variables
-Percent_Correction = 100;
+Percent_Correction = 80;
 Pd = -0.3; %the LoG event
 SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
 Total_Num_Runs = 10;
