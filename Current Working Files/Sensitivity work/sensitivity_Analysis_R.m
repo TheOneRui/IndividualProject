@@ -19,8 +19,7 @@ results = cell(2,Total_Num_Runs+2);
 run_num = 2;
 
 
-for j = 0 : 2.5: 50
-    Accuracy = j;
+    Accuracy = 0;
     run_num = 2;
     
     %Folder Creation for Result Storage
@@ -116,4 +115,3 @@ for j = 0 : 2.5: 50
     file_title2 = sprintf('results.mat');
     save(file_title2, "results");
     movefile(file_title2, folder_title);
-end
