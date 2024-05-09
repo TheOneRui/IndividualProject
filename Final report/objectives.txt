@@ -1,0 +1,5 @@
+•	To investigate the Probabilistic Envelope of Frequency Responses output from the SFR model.
+•	To investigate the frequency responses when attempting to compensate for the transient frequency dip. 
+•	To investigate the effects of the Margin of Error specific to each average variable on the SFR model
+•	Evaluate the effects of the estimation of H on the viability of the application of OFFC
+•	Define an acceptable range of H from the estimated value of H, in the OFFC use case
