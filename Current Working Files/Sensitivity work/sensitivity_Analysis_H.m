@@ -2,7 +2,7 @@
 Percent_Correction = 100;
 Pd = -0.3; 
 SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
-Total_Num_Runs = 20;
+Total_Num_Runs = 8;
 Accuracy = 5; %Tolerance or Uncertainty
 H_Mean = 8; %Expected Value of Inertia Within the Grid
 
@@ -19,7 +19,7 @@ results = cell(2,Total_Num_Runs+2);
 run_num = 2;
 
 
-for j = 0 : 2.5: 50
+for j = 50 : 2.5: 50
     Accuracy = j;
     run_num = 2;
     
@@ -64,7 +64,7 @@ for j = 0 : 2.5: 50
         %Increment Run Number
         run_num = run_num + 1;
         %Randomize the Variables by Normal Distribution
-        H = (H_Mean*(Accuracy/100))*randn()+H_Mean; %mean of H_Mean with standard dev of Accuracy
+        H = H_Mean-(1*(i-1)); %mean of H_Mean with standard dev of Accuracy
         while H <= 0
             H = (H_Mean*(Accuracy/100))*randn()+H_Mean;
         end
@@ -88,13 +88,12 @@ for j = 0 : 2.5: 50
     %Plot Results for Saving
     hold on
     for i = 3 : length(results) %Plot all the results in one Figure
-        plot(results{1,i},':');
+        plot(results{1,i});
         waitbar(0.5+(1/Total_Num_Runs)*((i-2)/2),progress);
     end
     close(progress);
     %Plot the Mean result last so it sits on top and is most obvious
-    plot(results{1,1},'k--','DisplayName', 'Mean'); 
-    yline(49.5/50, 'k', 'DisplayName', 'Statutory Limit');
+    plot(results{1,1},'k','DisplayName', 'H = 8'); 
     %Add appropriate title and axis labels
     plot_title = sprintf('Envelope f(t) for H mean = %f with %d percent uncertainty',H_Mean,Accuracy);
     title(plot_title);

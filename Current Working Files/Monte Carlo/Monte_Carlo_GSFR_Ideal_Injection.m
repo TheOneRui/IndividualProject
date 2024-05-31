@@ -1,6 +1,6 @@
 %Part 0: Initialization of the experiment
 %Initialize Global Variables
-Percent_Correction = 80;
+Percent_Correction = 100;
 Pd = -0.3; %the LoG event
 SigIn = [0 0]; %load an empty signal for Power injection (SigIn)
 Total_Num_Runs = 10;
@@ -56,7 +56,7 @@ results{2,1} = [R H K Fh Tr D];
 %and the Dtr, Settling frequency, and frequency nadir.
 %can then manually do the unit step function work with a for loop
 Nadir = min(GSFR_output);
-settling_Frequency = 1 + ((R*Pd)/(D*R+K));
+settling_Frequency = 1+((R*Pd)/(D*R+K));
 Dtr = settling_Frequency - Nadir;
 New_Nadir = B*Dtr + Nadir;
 

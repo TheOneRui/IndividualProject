@@ -1,8 +1,8 @@
 %Initialization of the experiment
 %Correction Factor Value:
-B = 0.9;
+B = 1;
 %Pd or P step loss in the case of an LoG event
-Pd = -0.3;
+Pd = -0.1;
 
 %Part 1: calculate GSFR(s) and the BASE CASE
 model1 = "GSFR_with_P_sigIn";
